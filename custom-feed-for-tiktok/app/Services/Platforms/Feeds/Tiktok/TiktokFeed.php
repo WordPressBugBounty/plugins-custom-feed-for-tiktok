@@ -128,7 +128,7 @@ class TiktokFeed extends BaseFeed
                 ],
             ]);
 
-            do_action( 'wpsocialreviews/tiktok_feed_api_connect_response', $response );
+            do_action( 'wpsocialreviews/tiktok_feed_api_connect_response', $response ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
             if (is_wp_error($response)) {
                 throw new \Exception($response->get_error_message()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -140,7 +140,7 @@ class TiktokFeed extends BaseFeed
             }
 
             if(Arr::get($response, 'error.code') && (new PlatformData('tiktok'))->isAppPermissionError($response)){
-                do_action( 'wpsocialreviews/tiktok_feed_app_permission_revoked' );
+                do_action( 'wpsocialreviews/tiktok_feed_app_permission_revoked' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
             }
 
             if (200 === wp_remote_retrieve_response_code($response)) {
@@ -428,7 +428,7 @@ class TiktokFeed extends BaseFeed
                         'error' => $errorArray,
                     ];
                     if(Arr::get($errorResponse, 'error.code') && (new PlatformData('tiktok'))->isAppPermissionError($errorResponse)){
-                        do_action( 'wpsocialreviews/tiktok_feed_app_permission_revoked' );
+                        do_action( 'wpsocialreviews/tiktok_feed_app_permission_revoked' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
                     }
 
 //                    $userId = Arr::get($accountDetails, 'data.user.open_id', '');
@@ -473,11 +473,10 @@ class TiktokFeed extends BaseFeed
             $settings['dynamic']['error_message']['error_message'] = __('TikTok feeds are not being displayed due to the "optimize images" option being disabled. If the GDPR settings are set to "Yes," it is necessary to enable the optimize images option.', 'custom-feed-for-tiktok');
         }
 
-//        $isActive = get_option('wpsr_'.$this->platform.'_connected_sources_config');
-//        if ( class_exists('\WPSocialReviews\App\Services\Onboarding\OnboardingHelper') && Arr::get($settings, 'feed_settings.created_from_onboarding') && !$isActive) {
-//            $onboardingHelper = new \WPSocialReviews\App\Services\Onboarding\OnboardingHelper();
-//            $onboardingHelper::applyOnboardingSettings($postId, 'tiktok', $settings);
-//        }
+        if ( class_exists('\WPSocialReviews\App\Services\Onboarding\OnboardingHelper') && Arr::get($settings, 'feed_settings.created_from_onboarding')) {
+            $onboardingHelper = new \WPSocialReviews\App\Services\Onboarding\OnboardingHelper();
+            $onboardingHelper::applyOnboardingSettings($postId, 'tiktok', $settings);
+        }
 
         return $settings;
     }
@@ -523,6 +522,12 @@ class TiktokFeed extends BaseFeed
     {
         if(defined('WPSOCIALREVIEWS_PRO') && class_exists('\WPSocialReviewsPro\App\Services\TemplateCssHandler')){
             (new \WPSocialReviewsPro\App\Services\TemplateCssHandler())->saveCss($settings, $postId);
+        }
+
+        // Remove template from onboarding sessions since it's now been edited
+        if ( class_exists('\WPSocialReviews\App\Services\Onboarding\OnboardingHelper') && Arr::get($settings, 'feed_settings.created_from_onboarding')) {
+            $onboardingHelper = new \WPSocialReviews\App\Services\Onboarding\OnboardingHelper();
+            $onboardingHelper::removeFromOnboardingSessions($postId);
         }
 
         // unset them for wpsr_template_config meta
@@ -710,7 +715,7 @@ class TiktokFeed extends BaseFeed
 
             $account_data = $this->makeRequest($fetchUrl, $accessToken, $body_args);
 
-            do_action( 'wpsocialreviews/tiktok_feed_api_connect_response', $account_data );
+            do_action( 'wpsocialreviews/tiktok_feed_api_connect_response', $account_data ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
             if(is_wp_error($account_data)) {
                 $errorMessage = ['error_message' => $account_data->get_error_message()];
@@ -724,7 +729,7 @@ class TiktokFeed extends BaseFeed
                 $pages_response_data['error']['code'] = $errorCode;
 
                 if(Arr::get($pages_response_data, 'error.code') && (new PlatformData('tiktok'))->isAppPermissionError($pages_response_data)){
-                    do_action( 'wpsocialreviews/tiktok_feed_app_permission_revoked' );
+                    do_action( 'wpsocialreviews/tiktok_feed_app_permission_revoked' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
                 }
 
                 $data = [
@@ -891,6 +896,12 @@ class TiktokFeed extends BaseFeed
 
         $formattedVideos = [];
         foreach ($videos as $index => $video) {
+            $title = Arr::get($video, 'title', '');
+            $video_description = Arr::get($video, 'video_description', '');
+            if(method_exists(Helper::class, 'sanitizeForStorage')){
+                $title = Helper::sanitizeForStorage($title);
+                $video_description = Helper::sanitizeForStorage($video_description);
+            }
             $user = Arr::get($video, 'from', []);
             $formattedUser = $this->getFormattedUser($user);
             $formattedVideos[$index]['id'] = Arr::get($video, 'id', '');
@@ -903,8 +914,8 @@ class TiktokFeed extends BaseFeed
             $formattedVideos[$index]['media'] = $formattedMedia;
 
             $formattedVideos[$index]['created_at'] = Arr::get($video, 'create_time', '');
-            $formattedVideos[$index]['title'] = Arr::get($video, 'title', '');
-            $formattedVideos[$index]['text'] = Arr::get($video, 'video_description', '');
+            $formattedVideos[$index]['title'] = $title;
+            $formattedVideos[$index]['text'] = $video_description;
         }
 
         $allData['videos'] = $formattedVideos;
@@ -956,7 +967,7 @@ class TiktokFeed extends BaseFeed
             );
             $accountData = wp_remote_get($fetchUrl , $args);
 
-            do_action( 'wpsocialreviews/tiktok_feed_api_connect_response', $accountData);
+            do_action( 'wpsocialreviews/tiktok_feed_api_connect_response', $accountData); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
             if(is_wp_error($accountData)) {
                 $errors = [
@@ -966,7 +977,7 @@ class TiktokFeed extends BaseFeed
             }
 
             if(Arr::get($accountData, 'error.code') && (new PlatformData('tiktok'))->isAppPermissionError($accountData)){
-                do_action( 'wpsocialreviews/tiktok_feed_app_permission_revoked' );
+                do_action( 'wpsocialreviews/tiktok_feed_app_permission_revoked' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
             }
 
             if(Arr::get($accountData, 'response.code') !== 200) {

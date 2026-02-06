@@ -31,6 +31,7 @@ class Config
         return array(
             'feed_settings' => array(
                 'platform'                  => 'tiktok',
+                'created_from_onboarding'   => Arr::get($settings,'created_from_onboarding', false),
                 'template'                  => Arr::get($settings, 'template', 'template1'),
                 'layout_type'               => Arr::get($settings, 'layout_type', 'grid'),
                 'responsive_column_number'  => array(
@@ -115,6 +116,10 @@ class Config
                     'pagination_type' => Arr::get($settings,'pagination_settings.pagination_type', 'none'),
                     'load_more_button_text' => sanitize_text_field(Arr::get($settings, 'pagination_settings.load_more_button_text', __('Load More', 'custom-feed-for-tiktok'))),
                     'paginate'        => (int) Arr::get($settings,'pagination_settings.paginate', 6),
+                    'paginate_number'       => array(
+                        'desktop' => (int) Arr::get($settings, 'pagination_settings.paginate_number.desktop', Arr::get($settings, 'pagination_settings.paginate', 6)),
+                        'mobile'  => (int) Arr::get($settings, 'pagination_settings.paginate_number.mobile', 6)
+                    ),
                 ),
             ),
         );
@@ -122,6 +127,8 @@ class Config
 
     public function getStyleElement()
     {
+        $has_pro = defined('WPSOCIALREVIEWS_PRO') && WPSOCIALREVIEWS_PRO;
+
         return array(
             'header' => array(
                 'title' => __('Header', 'custom-feed-for-tiktok'),
@@ -142,6 +149,7 @@ class Config
                             'fieldKey'  => 'text_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         )
                     )
                 ),
@@ -161,6 +169,7 @@ class Config
                             'fieldKey'  => 'text_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         ),
                     )
                 ),
@@ -177,22 +186,26 @@ class Config
                             'fieldKey'  => 'text_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         ),
                     )
                 ),
                 array(
-                    'title'     => __('Box', 'custom-feed-for-tiktok'),
+                    'title'     => __('Header Box', 'custom-feed-for-tiktok'),
                     'key'      => 'header_box',
                     'divider' => false,
                     'typography' => false,
                     'padding' => true,
                     'border' => true,
+                    'border_radius' => true,
+                    'box_shadow' => true,
                     'styles' => array(
                         array(
                             'title'      => __('Background Color:', 'custom-feed-for-tiktok'),
                             'fieldKey'  => 'background_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         )
                     )
                 )
@@ -213,6 +226,7 @@ class Config
                             'fieldKey'  => 'text_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         )
                     )
                 ),
@@ -229,6 +243,7 @@ class Config
                             'fieldKey'  => 'text_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         )
                     )
                 ),
@@ -245,6 +260,7 @@ class Config
                             'fieldKey'  => 'text_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         )
                     )
                 ),
@@ -261,6 +277,7 @@ class Config
                             'fieldKey'  => 'text_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         )
                     )
                 ),
@@ -276,6 +293,7 @@ class Config
                             'fieldKey'  => 'text_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         )
                     )
                 ),
@@ -288,19 +306,56 @@ class Config
                     'divider' => false,
                     'typography' => true,
                     'padding' => true,
-                    'border' => false,
+                    'border' => true,
+                    'border_radius' => true,
+                    'slider' => array(
+                        'title' => __('Top Spacing', 'custom-feed-for-tiktok'),
+                    ),
                     'styles' => array(
                         array(
                             'title'      => __('Text Color:', 'custom-feed-for-tiktok'),
                             'fieldKey'  => 'text_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         ),
                         array(
                             'title'      => __('Background Color:', 'custom-feed-for-tiktok'),
                             'fieldKey'  => 'background_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
+                        )
+                    )
+                ),
+                array(
+                    'title'     => __('Hover Style', 'custom-feed-for-tiktok'),
+                    'key'      => 'follow_button_hover',
+                    'divider' => false,
+                    'typography' => false,
+                    'padding' => false,
+                    'border' => false,
+                    'styles' => array(
+                        array(
+                            'title'      => __('Text Hover Color:', 'custom-feed-for-tiktok'),
+                            'fieldKey'  => 'text_color',
+                            'type'      => 'color_picker',
+                            'flex'      => true,
+                            'disabled' => !$has_pro,
+                        ),
+                        array(
+                            'title'      => __('Background Hover Color:', 'custom-feed-for-tiktok'),
+                            'fieldKey'  => 'background_color',
+                            'type'      => 'color_picker',
+                            'flex'      => true,
+                            'disabled' => !$has_pro,
+                        ),
+                        array(
+                            'title'      => __('Border Hover Color:', 'custom-feed-for-tiktok'),
+                            'fieldKey'  => 'border_color',
+                            'type'      => 'color_picker',
+                            'flex'      => true,
+                            'disabled' => !$has_pro,
                         )
                     )
                 )
@@ -314,38 +369,130 @@ class Config
                     'typography' => true,
                     'padding' => true,
                     'border' => true,
+                    'border_radius' => true,
+                    'slider' => array(
+                        'title' => __('Top Spacing', 'custom-feed-for-tiktok'),
+                    ),
                     'styles' => array(
                         array(
                             'title'      => __('Text Color:', 'custom-feed-for-tiktok'),
                             'fieldKey'  => 'text_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         ),
                         array(
                             'title'      => __('Background Color:', 'custom-feed-for-tiktok'),
                             'fieldKey'  => 'background_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
+                        ),
+                    )
+                ),
+                array(
+                    'title'     => __('Hover Style', 'custom-feed-for-tiktok'),
+                    'key'      => 'tiktok_pagination_hover',
+                    'divider' => false,
+                    'typography' => false,
+                    'padding' => false,
+                    'border' => false,
+                    'styles' => array(
+                        array(
+                            'title'      => __('Text Hover Color:', 'custom-feed-for-tiktok'),
+                            'fieldKey'  => 'text_color',
+                            'type'      => 'color_picker',
+                            'flex'      => true,
+                            'disabled' => !$has_pro,
+                        ),
+                        array(
+                            'title'      => __('Background Hover Color:', 'custom-feed-for-tiktok'),
+                            'fieldKey'  => 'background_color',
+                            'type'      => 'color_picker',
+                            'flex'      => true,
+                            'disabled' => !$has_pro,
+                        ),
+                        array(
+                            'title'      => __('Border Hover Color:', 'custom-feed-for-tiktok'),
+                            'fieldKey'  => 'border_color',
+                            'type'      => 'color_picker',
+                            'flex'      => true,
+                            'disabled' => !$has_pro,
                         ),
                     )
                 )
             ),
             'item' => array(
-                'title' => __('Item Box', 'custom-feed-for-tiktok'),
+                'title' => __('Item Box Content', 'custom-feed-for-tiktok'),
                 'key'  => 'item_box',
                 array(
                     'key'      => 'item_box',
                     'divider' => false,
                     'typography' => false,
                     'padding' => true,
-                    'border' => true,
                     'styles' => array(
                         array(
                             'title'      => __('Background Color:', 'custom-feed-for-tiktok'),
                             'fieldKey'  => 'background_color',
                             'type'      => 'color_picker',
                             'flex'      => true,
+                            'disabled' => !$has_pro,
                         )
+                    )
+                ),
+                array(
+                    'title'     => __('Item Box Content Hover', 'custom-feed-for-tiktok'),
+                    'key'      => 'item_box_hover',
+                    'divider' => false,
+                    'typography' => false,
+                    'padding' => false,
+                    'border' => false,
+                    'styles' => array(
+                        array(
+                            'title'      => __('Background Hover Color:', 'custom-feed-for-tiktok'),
+                            'fieldKey'  => 'background_color',
+                            'type'      => 'color_picker',
+                            'flex'      => true,
+                            'disabled' => !$has_pro,
+                        ),
+                    )
+                )
+            ),
+            'item_wrapper' => array(
+                'title' => __('Item Box', 'custom-feed-for-tiktok'),
+                'key'  => 'item_box_wrapper',
+                array(
+                    'key'      => 'item_box_wrapper',
+                    'divider' => false,
+                    'typography' => false,
+                    'border' => true,
+                    'border_radius' => true,
+                    'box_shadow' => true,
+                    'styles' => array(
+                        array(
+                            'title'      => __('Background Color:', 'custom-feed-for-tiktok'),
+                            'fieldKey'  => 'background_color',
+                            'type'      => 'color_picker',
+                            'flex'      => true,
+                            'disabled' => !$has_pro,
+                        )
+                    )
+                ),
+                array(
+                    'title'     => __('Item Box Hover Style', 'custom-feed-for-tiktok'),
+                    'key'      => 'item_box_wrapper_hover',
+                    'divider' => false,
+                    'typography' => false,
+                    'padding' => false,
+                    'border' => false,
+                    'styles' => array(
+                        array(
+                            'title'      => __('Border Hover Color:', 'custom-feed-for-tiktok'),
+                            'fieldKey'  => 'border_color',
+                            'type'      => 'color_picker',
+                            'flex'      => true,
+                            'disabled' => !$has_pro,
+                        ),
                     )
                 )
             ),
@@ -505,6 +652,38 @@ class Config
                         'linked' => Arr::get($settings,'styles.header_box.border.linked', false),
                         'border_style' => Arr::get($settings,'styles.header_box.border.border_style', ''),
                         'border_color' => Arr::get($settings,'styles.header_box.border.border_color', ''),
+                    ),
+                    'border_radius' => array(
+                        'top' => array(
+                            'desktop' => Arr::get($settings,'styles.header_box.border_radius.top.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.header_box.border_radius.top.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.header_box.border_radius.top.mobile', ''),
+                        ),
+                        'right' => array(
+                            'desktop' => Arr::get($settings,'styles.header_box.border_radius.right.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.header_box.border_radius.right.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.header_box.border_radius.right.mobile', ''),
+                        ),
+                        'bottom' => array(
+                            'desktop' => Arr::get($settings,'styles.header_box.border_radius.bottom.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.header_box.border_radius.bottom.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.header_box.border_radius.bottom.mobile', ''),
+                        ),
+                        'left' => array(
+                            'desktop' => Arr::get($settings,'styles.header_box.border_radius.left.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.header_box.border_radius.left.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.header_box.border_radius.left.mobile', ''),
+                        ),
+                        'linked' => Arr::get($settings,'styles.header_box.border_radius.linked', false),
+                    ),
+                    'box_shadow' => array(
+                        'box_shadow_style' => Arr::get($settings,'styles.header_box.box_shadow.box_shadow_style', 'none'),
+                        'horizontal' => Arr::get($settings,'styles.header_box.box_shadow.horizontal', ''),
+                        'vertical' => Arr::get($settings,'styles.header_box.box_shadow.vertical', ''),
+                        'blur' => Arr::get($settings,'styles.header_box.box_shadow.blur', ''),
+                        'spread' => Arr::get($settings,'styles.header_box.box_shadow.spread', ''),
+                        'color' => Arr::get($settings,'styles.header_box.box_shadow.color', ''),
+                        'inset' => Arr::get($settings,'styles.header_box.box_shadow.inset', 'no'),
                     ),
                 ),
                 'author' => array(
@@ -672,6 +851,44 @@ class Config
                         ),
                         'linked' => Arr::get($settings,'styles.follow_button.padding.linked', false),
                     ),
+                    'slider'  => array(
+                        'top' => array(
+                            'desktop' => Arr::get($settings,'styles.follow_button.slider.top.desktop', 0),
+                            'tablet' => Arr::get($settings,'styles.follow_button.slider.top.tablet', 0),
+                            'mobile' => Arr::get($settings,'styles.follow_button.slider.top.mobile', 0),
+                        ),
+                    ),
+                    'border_radius' => array(
+                        'top' => array(
+                            'desktop' => Arr::get($settings,'styles.follow_button.border_radius.top.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.follow_button.border_radius.top.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.follow_button.border_radius.top.mobile', ''),
+                        ),
+                        'right' => array(
+                            'desktop' => Arr::get($settings,'styles.follow_button.border_radius.right.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.follow_button.border_radius.right.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.follow_button.border_radius.right.mobile', ''),
+                        ),
+                        'bottom' => array(
+                            'desktop' => Arr::get($settings,'styles.follow_button.border_radius.bottom.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.follow_button.border_radius.bottom.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.follow_button.border_radius.bottom.mobile', ''),
+                        ),
+                        'left' => array(
+                            'desktop' => Arr::get($settings,'styles.follow_button.border_radius.left.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.follow_button.border_radius.left.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.follow_button.border_radius.left.mobile', ''),
+                        ),
+                        'linked' => Arr::get($settings,'styles.follow_button.border_radius.linked', false),
+                    ),
+                ),
+                'follow_button_hover' => array(
+                    'selector' => $prefix.' .wpsr-tiktok-feed-follow-button-group .wpsr-tiktok-feed-btn a:hover',
+                    'color'  => array(
+                        'text_color' => Arr::get($settings,'styles.follow_button_hover.color.text_color', ''),
+                        'background_color' => Arr::get($settings,'styles.follow_button_hover.color.background_color', ''),
+                        'border_color' => Arr::get($settings,'styles.follow_button_hover.color.border_color', ''),
+                    ),
                 ),
                 'tiktok_pagination' => array(
                     'selector' => $prefix.' .wpsr_more',
@@ -748,7 +965,44 @@ class Config
                         'border_style' => Arr::get($settings,'styles.tiktok_pagination.border.border_style', ''),
                         'border_color' => Arr::get($settings,'styles.tiktok_pagination.border.border_color', ''),
                     ),
-
+                    'border_radius' => array(
+                        'top' => array(
+                            'desktop' => Arr::get($settings,'styles.tiktok_pagination.border_radius.top.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.tiktok_pagination.border_radius.top.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.tiktok_pagination.border_radius.top.mobile', ''),
+                        ),
+                        'right' => array(
+                            'desktop' => Arr::get($settings,'styles.tiktok_pagination.border_radius.right.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.tiktok_pagination.border_radius.right.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.tiktok_pagination.border_radius.right.mobile', ''),
+                        ),
+                        'bottom' => array(
+                            'desktop' => Arr::get($settings,'styles.tiktok_pagination.border_radius.bottom.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.tiktok_pagination.border_radius.bottom.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.tiktok_pagination.border_radius.bottom.mobile', ''),
+                        ),
+                        'left' => array(
+                            'desktop' => Arr::get($settings,'styles.tiktok_pagination.border_radius.left.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.tiktok_pagination.border_radius.left.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.tiktok_pagination.border_radius.left.mobile', ''),
+                        ),
+                        'linked' => Arr::get($settings,'styles.tiktok_pagination.border_radius.linked', false),
+                    ),
+                    'slider'  => array(
+                        'top' => array(
+                            'desktop' => Arr::get($settings,'styles.tiktok_pagination.slider.top.desktop', 0),
+                            'tablet' => Arr::get($settings,'styles.tiktok_pagination.slider.top.tablet', 0),
+                            'mobile' => Arr::get($settings,'styles.tiktok_pagination.slider.top.mobile', 0),
+                        ),
+                    ),
+                ),
+                'tiktok_pagination_hover' => array(
+                    'selector' => $prefix.' .wpsr_more:hover',
+                    'color'  => array(
+                        'text_color' => Arr::get($settings,'styles.tiktok_pagination_hover.color.text_color', ''),
+                        'background_color' => Arr::get($settings,'styles.tiktok_pagination_hover.color.background_color', ''),
+                        'border_color' => Arr::get($settings,'styles.tiktok_pagination_hover.color.border_color', ''),
+                    ),
                 ),
                 'item_box' => array(
                     'selector' => $prefix.'.wpsr-tiktok-feed-wrapper .wpsr-tiktok-feed-item .wpsr-tiktok-feed-inner',
@@ -778,6 +1032,15 @@ class Config
                         ),
                         'linked' => Arr::get($settings,'styles.item_box.padding.linked', false),
                     ),
+                ),
+                'item_box_hover' => array(
+                    'selector' => $prefix.'.wpsr-tiktok-feed-wrapper .wpsr-tiktok-feed-item .wpsr-tiktok-feed-inner:hover',
+                    'color'  => array(
+                        'background_color' => Arr::get($settings,'styles.item_box_hover.color.background_color', ''),
+                    ),
+                ),
+                'item_box_wrapper' => array(
+                    'selector' => $prefix.'.wpsr-tiktok-feed-wrapper .wpsr-tiktok-feed-item',
                     'border' => array(
                         'top' => array(
                             'desktop' => Arr::get($settings,'styles.item_box.border.top.desktop', ''),
@@ -803,7 +1066,44 @@ class Config
                         'border_style' => Arr::get($settings,'styles.item_box.border.border_style', ''),
                         'border_color' => Arr::get($settings,'styles.item_box.border.border_color', ''),
                     ),
-
+                    'border_radius' => array(
+                        'top' => array(
+                            'desktop' => Arr::get($settings,'styles.item_box.border_radius.top.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.item_box.border_radius.top.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.item_box.border_radius.top.mobile', ''),
+                        ),
+                        'right' => array(
+                            'desktop' => Arr::get($settings,'styles.item_box.border_radius.right.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.item_box.border_radius.right.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.item_box.border_radius.right.mobile', ''),
+                        ),
+                        'bottom' => array(
+                            'desktop' => Arr::get($settings,'styles.item_box.border_radius.bottom.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.item_box.border_radius.bottom.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.item_box.border_radius.bottom.mobile', ''),
+                        ),
+                        'left' => array(
+                            'desktop' => Arr::get($settings,'styles.item_box.border_radius.left.desktop', ''),
+                            'tablet' => Arr::get($settings,'styles.item_box.border_radius.left.tablet', ''),
+                            'mobile' => Arr::get($settings,'styles.item_box.border_radius.left.mobile', ''),
+                        ),
+                        'linked' => Arr::get($settings,'styles.item_box.border_radius.linked', false),
+                    ),
+                    'box_shadow' => array(
+                        'box_shadow_style' => Arr::get($settings,'styles.item_box_wrapper.box_shadow.box_shadow_style', 'none'),
+                        'horizontal' => Arr::get($settings,'styles.item_box_wrapper.box_shadow.horizontal', ''),
+                        'vertical' => Arr::get($settings,'styles.item_box_wrapper.box_shadow.vertical', ''),
+                        'blur' => Arr::get($settings,'styles.item_box_wrapper.box_shadow.blur', ''),
+                        'spread' => Arr::get($settings,'styles.item_box_wrapper.box_shadow.spread', ''),
+                        'color' => Arr::get($settings,'styles.item_box_wrapper.box_shadow.color', ''),
+                        'inset' => Arr::get($settings,'styles.item_box_wrapper.box_shadow.inset', 'no'),
+                    ),
+                ),
+                'item_box_wrapper_hover' => array(
+                    'selector' => $prefix.'.wpsr-tiktok-feed-wrapper .wpsr-tiktok-feed-item:hover',
+                    'color'  => array(
+                        'border_color' => Arr::get($settings,'styles.item_box_wrapper_hover.color.border_color', ''),
+                    ),
                 ),
             ),
         ];

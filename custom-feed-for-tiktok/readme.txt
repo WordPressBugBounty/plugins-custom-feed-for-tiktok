@@ -1,10 +1,10 @@
 === Custom Feed for TikTok - Social Post Feed Plugin for TikTok ===
 Contributors: techjewel, devutpol, tanjimtc71, wpmanageninja
 Tags: TikTok, tiktok feed, tiktok video, tiktok plugin, tiktok gallery
-Requires at least: 5.6
-Tested up to: 6.8
+Requires at least: 6.2
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.1.7
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,18 @@ Please review the terms of use and privacy policy of TikTok to understand how yo
 7. 100% Responsive on all devices
 
 == Changelog ==
+
+1.2.1
+- Added device-based responsive control for ‘Load More’ behavior.
+- Added advanced style options for templates, including box shadow, border radius, hover effects, and padding and spacing controls. (Pro)
+
+1.2.0
+- Enhance HTML sanitization for user-generated content
+- New UI improvements for better user experience
+
+1.1.8
+- Removed redundant load_plugin_textdomain() initialization
+- Improved sanitization and escaping for imported feed content
 
 1.1.7
 - Improved Error Handling: Added encryption error detection, with clear, user-friendly error messages (includes error code 999 for access token issues).
