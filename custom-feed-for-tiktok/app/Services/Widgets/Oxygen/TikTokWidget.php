@@ -448,7 +448,7 @@ class TikTokWidget extends OxygenEl
         if ( function_exists('do_oxygen_elements') ) {
             echo wp_kses_post(do_oxygen_elements('[wp_social_ninja id="' . esc_html($options['wpsr_tiktok']) . '" platform="tiktok"]'));
         } else {
-            echo wp_kses_post(do_shortcode('[wp_ social_ninja id="' . esc_html($options['wpsr_tiktok']) . '" platform="tiktok"]'));
+            echo wp_kses_post(do_shortcode('[wp_social_ninja id="' . esc_html($options['wpsr_tiktok']) . '" platform="tiktok"]'));
         }
     }
 
@@ -464,7 +464,6 @@ class TikTokWidget extends OxygenEl
                 WPSOCIALREVIEWS_VERSION
             );
             wp_enqueue_script('wp-social-review');
-            add_action('wp_footer', array(new ShortcodeHandler(), 'loadLocalizeScripts'), 99);
             if (defined('WPSOCIALREVIEWS_PRO')) {
                 wp_enqueue_style(
                     'swiper',
