@@ -21,6 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TiktokFeed extends BaseFeed
 {
+    /**
+     * TikTok app generation the account was authorized against.
+     * Bump when the TikTok developer app changes; accounts without it must reconnect.
+     */
+    const AUTH_APP_VERSION = 2;
+
     public $platform = 'tiktok';
     protected $authProvider = 'tiktok';
     protected $authFlow = 'feed';
@@ -181,6 +187,7 @@ class TiktokFeed extends BaseFeed
             'expiration_time' => time() + $expires_in,
             'refresh_expires_in' => $refresh_expires_in,
             'open_id' => $open_id,
+            'auth_app_version' => self::AUTH_APP_VERSION,
             'error_message'  => '',
             'error_code'     => '',
             'has_app_permission_error'     => false,
@@ -259,6 +266,12 @@ class TiktokFeed extends BaseFeed
 
         $existingData = $sourceList[$userId];
 
+        // The stored token wins: a caller can hold a copy read before a refresh replaced it.
+        $storedToken  = Arr::get($existingData, 'access_token', '');
+        $currentToken = $storedToken
+            ? ($this->protector->decrypt($storedToken) ?: $storedToken)
+            : ($this->protector->decrypt($accessToken) ?: $accessToken);
+
         // Check if we should refresh the token
         if ($this->shouldRefreshToken($existingData)) {
             $refreshToken = Arr::get($existingData, 'refresh_token', '');
@@ -270,7 +283,7 @@ class TiktokFeed extends BaseFeed
 
             // Handle refresh errors
             if (is_array($refreshResult) && isset($refreshResult['error_message'])) {
-                return $this->protector->decrypt($accessToken) ?: $accessToken;
+                return $currentToken;
             }
 
             // Return refreshed token if successful
@@ -281,7 +294,7 @@ class TiktokFeed extends BaseFeed
             return ['error_message' => 'Token refresh failed'];
         }
 
-        return $this->protector->decrypt($accessToken) ?: $accessToken;
+        return $currentToken;
     }
 
     public function refreshAccessToken($refreshTokenReceived, $userId)
@@ -338,6 +351,9 @@ class TiktokFeed extends BaseFeed
     public function getVerificationConfigs()
     {
         $connected_source_list  = $this->getConnectedSourceList();
+        foreach ($connected_source_list as $openId => $source) {
+            $connected_source_list[$openId]['needs_reconnect'] = (int) Arr::get($source, 'auth_app_version', 0) < self::AUTH_APP_VERSION;
+        }
         wp_send_json_success([
             'connected_source_list'  => $connected_source_list,
             'status'                 => true,
@@ -565,6 +581,7 @@ class TiktokFeed extends BaseFeed
             'sources'          => $this->getConnectedSourceList(),
             'template_details' => $templateDetails,
             'elements'         => $tiktokConfig->getStyleElement(),
+            'default_styles'   => $tiktokConfig->formatStylesConfig([], $postId),
             'translations'     => $translations
         ], 200);
     }
@@ -686,6 +703,20 @@ class TiktokFeed extends BaseFeed
         }
     }
 
+    /**
+     * The tier ceiling applies after tiktok_feeds_limit, so the filter can lower a feed but not
+     * lift it past the tier. Pro's ceiling is itself filterable; a feed is cached as one blob.
+     */
+    public function resolveFeedLimit($feedCount)
+    {
+        $limit = absint(apply_filters('custom_feed_for_tiktok/tiktok_feeds_limit', absint($feedCount)));
+        $max   = defined('WPSOCIALREVIEWS_PRO')
+            ? absint(apply_filters('custom_feed_for_tiktok/tiktok_feeds_max_limit', 200))
+            : 10;
+
+        return max(1, min($limit, max(1, $max)));
+    }
+
     public function getAccountFeed($account, $apiSettings, $cache = false)
     {
         $accessToken = $this->protector->decrypt($account['access_token']) ?: $account['access_token'];
@@ -699,12 +730,7 @@ class TiktokFeed extends BaseFeed
         $accessToken = $tokenResult;
         $feedType       = Arr::get($apiSettings, 'feed_type', 'user_feed');
 
-        $totalFeed      = Arr::get($apiSettings, 'feed_count');
-        $totalFeed      = !defined('WPSOCIALREVIEWS_PRO') && $totalFeed > 10 ? 10 : $totalFeed;
-        $totalFeed      = apply_filters('custom_feed_for_tiktok/tiktok_feeds_limit', $totalFeed);
-        if(defined('WPSOCIALREVIEWS_PRO') && $totalFeed > 200){
-            $totalFeed = 200;
-        }
+        $totalFeed      = $this->resolveFeedLimit(Arr::get($apiSettings, 'feed_count'));
 
         if($totalFeed >= 20){
             $perPage = 20;
@@ -1163,28 +1189,38 @@ class TiktokFeed extends BaseFeed
                 if ($feed_type === 'header') {
                     // For header cache, only update header details
                     $page_header_response = $this->getHeaderDetails($account, true);
-                    $this->handleApiError($page_header_response, $connectedSources, $account);
+                    $this->handleApiError($page_header_response, $sourceId);
                 } else {
                     // For feed caches, update both feed and header
                     $accountFeed = $this->getAccountFeed($account, $apiSettings, true);
-                    $this->handleApiError($accountFeed, $connectedSources, $account);
+                    $this->handleApiError($accountFeed, $sourceId);
 
-                    // Update header details
+                    // The feed call may have refreshed and rotated the tokens: read the account again.
+                    $account = Arr::get($this->getConnectedSourceList(), $sourceId, $account);
                     $page_header_response = $this->getHeaderDetails($account, true);
-                    $this->handleApiError($page_header_response, $connectedSources, $account);
+                    $this->handleApiError($page_header_response, $sourceId);
                 }
             }
         }
     }
 
-    private function handleApiError($response, &$connectedSources, $account)
+    private function handleApiError($response, $sourceId)
     {
         $hasApiError = Arr::get($response, 'error.message', '');
-        if ($hasApiError) {
-            $account['username'] = Arr::get($response, 'data.user.display_name', '');
-            $connectedSources = $this->addPlatformApiErrors($response, $connectedSources, $account);
-            update_option('wpsr_tiktok_connected_sources_config', array('sources' => $connectedSources));
+        if (!$hasApiError) {
+            return;
         }
+
+        // Read the sources now, never an earlier copy: that copy can hold tokens a refresh already replaced.
+        $connectedSources = $this->getConnectedSourceList();
+        if (empty($sourceId) || !isset($connectedSources[$sourceId])) {
+            return;
+        }
+
+        $account = $connectedSources[$sourceId];
+        $account['username'] = Arr::get($response, 'data.user.display_name', '');
+        $connectedSources = $this->addPlatformApiErrors($response, $connectedSources, $account);
+        update_option('wpsr_tiktok_connected_sources_config', array('sources' => $connectedSources));
     }
 
     public function clearCache()
